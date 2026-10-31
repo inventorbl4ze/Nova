@@ -1,3 +1,4 @@
+
 const $ = (id) => document.getElementById(id);
 
 let token = localStorage.getItem("nova_token");
@@ -33,9 +34,12 @@ function setAuthTab(tab) {
   $("loginTab").classList.toggle("active", tab === "login");
   $("registerTab").classList.toggle("active", tab === "register");
   $("nameWrap").classList.toggle("hidden", tab !== "register");
-  $("authSubmit").textContent = tab === "login" ? "Log in" : "Create account";
+  $("authSubmit").textContent =
+    tab === "login" ? "Log in" : "Create account";
   $("authError").textContent = "";
   $("authForm").dataset.mode = tab;
+
+  $("username").required = tab === "register";
 }
 
 $("loginTab").onclick = () => setAuthTab("login");
@@ -45,6 +49,7 @@ $("authForm").addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const mode = $("authForm").dataset.mode || "login";
+
   const username = $("username").value.trim();
   const email = $("email").value.trim();
   const password = $("password").value;
@@ -68,11 +73,14 @@ $("authForm").addEventListener("submit", async (event) => {
 
     token = result.token;
     currentUser = result.user;
+
     localStorage.setItem("nova_token", token);
 
     await bootApp();
+
   } catch (error) {
     $("authError").textContent = error.message;
+
   } finally {
     $("authSubmit").disabled = false;
     $("authSubmit").textContent =
@@ -85,6 +93,7 @@ $("authForm").addEventListener("submit", async (event) => {
 async function bootApp() {
   try {
     const result = await api("/me");
+
     currentUser = result.user || result;
 
     $("authScreen").classList.add("hidden");
@@ -100,9 +109,11 @@ async function bootApp() {
       (currentUser.username || "N").charAt(0).toUpperCase();
 
     await loadConversations();
+
     showWelcome();
+
   } catch (error) {
-    logout(false);
+    logout(true);
   }
 }
 
@@ -120,6 +131,7 @@ async function loadConversations() {
 
 function renderChatList() {
   const list = $("chatList");
+
   list.innerHTML = "";
 
   conversations.forEach((conversation) => {
@@ -127,9 +139,13 @@ function renderChatList() {
 
     item.className =
       "chat-item" +
-      (conversation.id === currentConversation ? " active" : "");
+      (String(conversation.id) === String(currentConversation)
+        ? " active"
+        : "");
 
-    item.textContent = conversation.title || "New conversation";
+    item.textContent =
+      conversation.title || "New conversation";
+
     item.title = conversation.title || "New conversation";
 
     item.onclick = () => openConversation(conversation.id);
@@ -140,30 +156,38 @@ function renderChatList() {
 
 function showWelcome() {
   currentConversation = null;
+
   $("welcome").classList.remove("hidden");
   $("messages").innerHTML = "";
   $("messages").classList.add("hidden");
   $("welcome").style.display = "flex";
+
   renderChatList();
 }
 
 async function createNewChat() {
-  try {
-    const result = await api("/conversations", {
-      method: "POST",
-      body: JSON.stringify({ title: "New conversation" })
-    });
+  const result = await api("/conversations", {
+    method: "POST",
+    body: JSON.stringify({
+      title: "New conversation"
+    })
+  });
 
-    const conversation = result.conversation || result;
+  const conversation = result.conversation || result;
 
-    currentConversation = conversation.id;
-
-    await loadConversations();
-    showChatArea();
-    $("messages").innerHTML = "";
-  } catch (error) {
-    alert(error.message);
+  if (!conversation.id) {
+    throw new Error("Could not create a conversation.");
   }
+
+  currentConversation = conversation.id;
+
+  await loadConversations();
+
+  showChatArea();
+
+  $("messages").innerHTML = "";
+
+  return conversation.id;
 }
 
 function showChatArea() {
@@ -175,23 +199,27 @@ function showChatArea() {
 async function openConversation(id) {
   try {
     currentConversation = id;
+
     showChatArea();
+
     $("messages").innerHTML = "";
 
-    const result = await api(`/conversations/${id}/messages`);
+    const result = await api(
+      `/conversations/${encodeURIComponent(id)}/messages`
+    );
+
     const messages = Array.isArray(result)
       ? result
       : result.messages || [];
 
     messages.forEach((message) => {
-      addMessage(
-        message.role,
-        message.content
-      );
+      addMessage(message.role, message.content);
     });
 
     renderChatList();
+
     scrollToBottom();
+
   } catch (error) {
     alert(error.message);
   }
@@ -235,9 +263,11 @@ function addMessage(role, content) {
       try {
         await navigator.clipboard.writeText(content);
         copy.textContent = "Copied!";
+
         setTimeout(() => {
           copy.textContent = "Copy response";
         }, 1500);
+
       } catch {
         copy.textContent = "Copy unavailable";
       }
@@ -251,11 +281,18 @@ function addMessage(role, content) {
   wrapper.appendChild(body);
 
   $("messages").appendChild(wrapper);
+
   scrollToBottom();
 }
 
+/* FIXED SCROLL FUNCTION */
+
 function scrollToBottom() {
-  $("chatScroll").scrollTop = $("chatScroll").scrollHeight;
+  const messages = $("messages");
+
+  if (messages) {
+    messages.scrollTop = messages.scrollHeight;
+  }
 }
 
 /* AI CHAT */
@@ -265,52 +302,72 @@ async function sendMessage(text) {
 
   if (!text || busy) return;
 
-  if (!currentConversation) {
-    await createNewChat();
-  }
-
   busy = true;
 
-  $("messageInput").value = "";
-  $("sendBtn").disabled = true;
+  const sendBtn = $("sendBtn");
+  const input = $("messageInput");
 
-  addMessage("user", text);
-
-  const typing = document.createElement("div");
-  typing.className = "typing";
-  typing.textContent = "NOVA AI is thinking...";
-  $("messages").appendChild(typing);
-
-  scrollToBottom();
+  sendBtn.disabled = true;
 
   try {
-    const result = await api("/chat", {
-      method: "POST",
-      body: JSON.stringify({
-        conversationId: currentConversation,
-        message: text
-      })
-    });
+    if (!currentConversation) {
+      await createNewChat();
+    }
 
-    typing.remove();
+    input.value = "";
+    input.style.height = "auto";
 
-    addMessage(
-      "assistant",
-      result.reply || result.message || "No response received."
-    );
+    addMessage("user", text);
 
-    await loadConversations();
+    const typing = document.createElement("div");
+    typing.className = "typing";
+    typing.textContent = "NOVA AI is thinking...";
+
+    $("messages").appendChild(typing);
+
+    scrollToBottom();
+
+    try {
+      const result = await api("/chat", {
+        method: "POST",
+        body: JSON.stringify({
+          conversationId: currentConversation,
+          message: text
+        })
+      });
+
+      typing.remove();
+
+      const reply =
+        result.reply ||
+        result.message ||
+        "NOVA could not generate a response.";
+
+      addMessage("assistant", reply);
+
+      await loadConversations();
+
+    } catch (error) {
+      typing.remove();
+
+      addMessage(
+        "assistant",
+        "I couldn't complete that request. " + error.message
+      );
+    }
+
   } catch (error) {
-    typing.remove();
-
     addMessage(
       "assistant",
-      "I couldn't complete that request. " + error.message
+      "Could not start the conversation: " + error.message
     );
+
   } finally {
     busy = false;
-    $("sendBtn").disabled = false;
-    $("messageInput").focus();
+
+    sendBtn.disabled = false;
+
+    input.focus();
   }
 }
 
@@ -318,29 +375,46 @@ async function sendMessage(text) {
 
 $("chatForm").addEventListener("submit", (event) => {
   event.preventDefault();
+
   sendMessage($("messageInput").value);
 });
 
 $("messageInput").addEventListener("keydown", (event) => {
   if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
+
     sendMessage($("messageInput").value);
   }
 });
 
 $("messageInput").addEventListener("input", () => {
-  $("messageInput").style.height = "auto";
-  $("messageInput").style.height =
-    Math.min($("messageInput").scrollHeight, 150) + "px";
+  const input = $("messageInput");
+
+  input.style.height = "auto";
+
+  input.style.height =
+    Math.min(input.scrollHeight, 150) + "px";
 });
+
+/* SUGGESTIONS */
 
 document.querySelectorAll(".suggestion").forEach((button) => {
   button.addEventListener("click", () => {
-    sendMessage(button.dataset.prompt || button.textContent);
+    sendMessage(
+      button.dataset.prompt || button.textContent
+    );
   });
 });
 
-$("newChat").onclick = createNewChat;
+/* NEW CHAT */
+
+$("newChat").onclick = async () => {
+  try {
+    await createNewChat();
+  } catch (error) {
+    alert(error.message);
+  }
+};
 
 /* MOBILE SIDEBAR */
 
