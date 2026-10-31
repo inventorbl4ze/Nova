@@ -1,0 +1,279 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#090a12">
+  <title>NOVA AI — Your Intelligent Assistant</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+  <!-- LOGIN AND REGISTER -->
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-card">
+
+      <div class="brand-mark">✦</div>
+
+      <h1 class="brand-name">
+        NOVA<span> AI</span>
+      </h1>
+
+      <p class="muted">
+        Your space to think, create and explore.
+      </p>
+
+      <div class="auth-tabs">
+        <button id="loginTab" class="tab active">
+          Sign in
+        </button>
+
+        <button id="registerTab" class="tab">
+          Create account
+        </button>
+      </div>
+
+      <form id="authForm">
+
+        <label id="nameWrap" class="hidden">
+          Username
+          <input
+            id="username"
+            maxlength="30"
+            autocomplete="username"
+            placeholder="Your name"
+          >
+        </label>
+
+        <label>
+          Email
+          <input
+            id="email"
+            type="email"
+            required
+            autocomplete="email"
+            placeholder="you@example.com"
+          >
+        </label>
+
+        <label>
+          Password
+          <input
+            id="password"
+            type="password"
+            required
+            minlength="8"
+            autocomplete="current-password"
+            placeholder="At least 8 characters"
+          >
+        </label>
+
+        <button
+          class="primary full"
+          id="authSubmit"
+          type="submit"
+        >
+          Sign in
+        </button>
+
+      </form>
+
+      <p id="authError" class="error"></p>
+
+      <p class="tiny muted">
+        Welcome to NOVA AI.
+      </p>
+
+    </div>
+  </div>
+
+
+  <!-- MAIN APPLICATION -->
+  <div id="app" class="app hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+      <div class="side-brand">
+        <span class="brand-mark small">✦</span>
+        <span>NOVA<span class="violet"> AI</span></span>
+      </div>
+
+      <button id="newChat" class="new-chat">
+        ＋ <span>New chat</span>
+      </button>
+
+      <div class="side-label">
+        YOUR CHATS
+      </div>
+
+      <div id="chatList" class="chat-list"></div>
+
+      <div class="side-bottom">
+
+        <div class="user-chip">
+
+          <div class="avatar" id="avatar">
+            N
+          </div>
+
+          <div class="user-meta">
+            <strong id="userName">User</strong>
+            <small id="userEmail"></small>
+          </div>
+
+        </div>
+
+        <button id="logout" class="logout">
+          ↪ Sign out
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <!-- MAIN CHAT AREA -->
+    <main class="main">
+
+      <header class="topbar">
+
+        <button
+          id="menuBtn"
+          class="icon-btn mobile-only"
+          aria-label="Open menu"
+        >
+          ☰
+        </button>
+
+        <div class="top-title">
+          NOVA <span>AI</span>
+        </div>
+
+        <div class="status">
+          <i></i> AI assistant
+        </div>
+
+      </header>
+
+
+      <!-- WELCOME SCREEN -->
+      <section id="welcome" class="welcome">
+
+        <div class="orb">✦</div>
+
+        <p class="eyebrow">
+          WELCOME TO YOUR AI SPACE
+        </p>
+
+        <h1>
+          What can I help you
+          <br>
+          <span>discover today?</span>
+        </h1>
+
+        <p class="muted welcome-copy">
+          Ask questions, explore ideas, learn something new
+          or build something amazing.
+        </p>
+
+
+        <div class="suggestions">
+
+          <button
+            class="suggestion"
+            data-prompt="Help me create a simple study timetable."
+          >
+            <b>▦</b>
+            <span>
+              <strong>Plan my day</strong>
+              <small>Create a study timetable</small>
+            </span>
+          </button>
+
+          <button
+            class="suggestion"
+            data-prompt="Explain artificial intelligence in simple terms."
+          >
+            <b>✧</b>
+            <span>
+              <strong>Learn something</strong>
+              <small>Explore a new topic</small>
+            </span>
+          </button>
+
+          <button
+            class="suggestion"
+            data-prompt="Give me three creative app ideas I could build."
+          >
+            <b>⌘</b>
+            <span>
+              <strong>Build an idea</strong>
+              <small>Brainstorm a new project</small>
+            </span>
+          </button>
+
+          <button
+            class="suggestion"
+            data-prompt="Help me write a short, friendly introduction."
+          >
+            <b>✎</b>
+            <span>
+              <strong>Write with me</strong>
+              <small>Start a writing project</small>
+            </span>
+          </button>
+
+        </div>
+
+      </section>
+
+
+      <!-- CHAT MESSAGES -->
+      <section
+        id="messages"
+        class="messages hidden"
+        aria-live="polite"
+      ></section>
+
+
+      <!-- MESSAGE COMPOSER -->
+      <div class="composer-wrap">
+
+        <form id="chatForm" class="composer">
+
+          <textarea
+            id="messageInput"
+            rows="1"
+            maxlength="6000"
+            placeholder="Message NOVA AI..."
+            required
+          ></textarea>
+
+          <button
+            id="sendBtn"
+            class="send-btn"
+            type="submit"
+            aria-label="Send message"
+          >
+            ↑
+          </button>
+
+        </form>
+
+        <p class="disclaimer">
+          NOVA AI can make mistakes. Check important information.
+        </p>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <script src="/app.js"></script>
+
+</body>
+</html>
